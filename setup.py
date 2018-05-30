@@ -6,10 +6,10 @@ with open("README.md", "r") as fh:
 
 setup(
     name='spectrum-client',
-    version='0.0.1',
+    version='0.0.3',
     description='CA Spectrum Web Services API wrapper',
     long_description=README,
-    long_description_content_type="text/markdown",
+    long_description_content_type='text/markdown',
     author='Renato Orgito',
     author_email='orgito@gmail.com',
     maintainer='Renato Orgito',
@@ -29,6 +29,7 @@ setup(
     ],
     keywords='spectrum-client network monitoring spectrum',
     packages=['spectrum_client'],
+    setup_requires=['setuptools>=38.6.0'],
     install_requires=[],
     python_requires='>=3.6',
     project_urls={
