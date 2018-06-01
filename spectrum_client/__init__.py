@@ -1,1 +1,1 @@
-from .spectrum import Spectrum
+from .spectrum import Spectrum, SpectrumClientException, SpectrumClientAuthException, SpectrumClientParameterError
