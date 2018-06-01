@@ -23,5 +23,5 @@ from spectrum_client import Spectrum
 spectrum = Spectrum('htt://oneclick.mydomain:8080', 'myuser', 'secret')
 
 # Update a model attribute
-spectrum.udpate_attribute('0x2760df','0x12bfc','12345')
+spectrum.udpate_attribute(0x2760df,0x12bfc,'12345')
 ```
