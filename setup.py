@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='spectrum-client',
-    version='0.0.3',
+    version='0.0.4',
     description='CA Spectrum Web Services API wrapper',
     long_description=README,
     long_description_content_type='text/markdown',
@@ -30,7 +30,7 @@ setup(
     keywords='spectrum-client network monitoring spectrum',
     packages=['spectrum_client'],
     setup_requires=['setuptools>=38.6.0'],
-    install_requires=[],
+    install_requires=['requests'],
     python_requires='>=3.6',
     project_urls={
         'Bug Reports': 'https://github.com/orgito/spectrum-client/issues',
