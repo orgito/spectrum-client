@@ -6,7 +6,7 @@ from requests.auth import HTTPBasicAuth
 
 SPECTRUM_URL = os.environ.get('SPECTRUM_URL')
 SPECTRUM_USERNAME = os.environ.get('SPECTRUM_USERNAME')
-SPECTRUM_PASSWORD = os.environ.get('SPECTRUM_PASSSWORD')
+SPECTRUM_PASSWORD = os.environ.get('SPECTRUM_PASSWORD')
 
 
 class SpectrumClientException(Exception):
