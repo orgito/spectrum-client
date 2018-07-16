@@ -23,5 +23,7 @@ from spectrum_client import Spectrum
 spectrum = Spectrum('htt://oneclick.mydomain:8080', 'myuser', 'secret')
 
 # Update a model attribute
-spectrum.udpate_attribute(0x2760df,0x12bfc,'12345')
+spectrum.update_attribute(0x210afa,0x10024,'MySNMPSecret')
 ```
+
+If not provided, server and credentials will be read from the environment variables `SPECTRUM_URL`, `SPECTRUM_USERNAME`, `SPECTRUM_PASSWORD`.
