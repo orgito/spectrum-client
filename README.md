@@ -20,7 +20,7 @@ $ pip install -U spectrum-client
 ``` python
 from spectrum_client import Spectrum
 
-spectrum = Spectrum('htt://oneclick.mydomain:8080', 'myuser', 'secret')
+spectrum = Spectrum('http://oneclick.mydomain:8080', 'myuser', 'secret')
 
 # Update a model attribute
 spectrum.update_attribute(0x210afa,0x10024,'MySNMPSecret')
