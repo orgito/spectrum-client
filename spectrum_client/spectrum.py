@@ -31,9 +31,24 @@ class Spectrum(object):
         self.url = url if not url.endswith('/') else url[:-1]
         self.auth = HTTPBasicAuth(username, password)
 
-    def _parse_res(self, res):
+    def _check_http(self, res):
         if res.status_code == 401:
             raise SpectrumClientAuthException('Authorization Failure. Invalid user name or password.')
+        res.raise_for_status()
+
+    def _parse_get(self, res):
+        self._check_http(res)
+
+        root = ET.fromstring(res.text)
+        model_error = root.find('.//ca:model', self._namespace).get('error')
+        if model_error:
+            raise SpectrumClientParameterError('Model Error: ' + model_error)
+        attr_error = root.find('.//ca:attribute', self._namespace).get('error')
+        if attr_error:
+            raise SpectrumClientParameterError(attr_error)
+
+    def _parse_update(self, res):
+        self._check_http(res)
 
         root = ET.fromstring(res.text)
         if root.find('.//ca:model', self._namespace).get('error') == 'Success':
@@ -44,6 +59,20 @@ class Spectrum(object):
         else:
             msg = root.find('.//ca:model', self._namespace).get('error-message')
         raise SpectrumClientParameterError(msg)
+
+    def get_attribute(self, model_handle, attr_id):
+        """Get an attribute of a Spectrum model.
+
+        Arguments:
+            model_handle {int} -- Model Handle of the model being queried.
+            attr_id {int} -- Attribute ID of the attribute being queried.
+        """
+        url = f'{self.url}/spectrum/restful/model/{hex(model_handle)}'
+        params = {'attr': hex(attr_id)}
+        res = requests.get(url, params=params, auth=self.auth)
+        self._parse_get(res)
+        root = ET.fromstring(res.text)
+        return root.find('.//ca:attribute', self._namespace).text
 
     def update_attribute(self, model_handle, attr_id, value):
         """Update an attribute of a Spectrum model.
@@ -57,4 +86,4 @@ class Spectrum(object):
         url = f'{self.url}/spectrum/restful/model/{hex(model_handle)}'
         params = {'attr': hex(attr_id), 'val': value}
         res = requests.put(url, params=params, auth=self.auth)
-        self._parse_res(res)
+        self._parse_update(res)
