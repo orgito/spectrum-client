@@ -87,3 +87,6 @@ class Spectrum(object):
         params = {'attr': hex(attr_id), 'val': value}
         res = requests.put(url, params=params, auth=self.auth)
         self._parse_update(res)
+
+    def set_maintenance(self, model_handle, on=True):
+        return self.update_attribute(model_handle, 0x1295d, str(not on))
