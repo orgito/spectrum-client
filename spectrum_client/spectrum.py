@@ -35,6 +35,7 @@ class Spectrum(object):
     <rs:requested-attribute id="0x11d42"/> <!-- Landscape Name-->
     <rs:requested-attribute id="0x1295d"/> <!-- isEnabled-->
     <rs:requested-attribute id="0x11564"/> <!-- Notes-->
+    <rs:requested-attribute id="0x12db9"/> <!-- ServiceDesk Asset ID-->
     '''
     models_search_template = '''<?xml version="1.0" encoding="UTF-8"?>
     <rs:model-request throttlesize="9999"
@@ -138,20 +139,20 @@ class Spectrum(object):
             </has-pcre>
         </and>'''.format(regex=regex, landscape_filter=landscape_filter)
         xml = self.models_search_template.format(models_filter=models_filter)
-        root = ET.fromstring(self.search_models(xml))
-        models = root.findall('.//ca:model', self.xml_namespace)
-        devices = {
-            model.get('mh'): {
-                attr.get('id'): attr.text for attr in model.getchildren()
-            } for model in models
-        }
-        return devices
+        return self.search_models(xml)
 
     def search_models(self, xml):
         url = '{}/spectrum/restful/models'.format(self.url)
         res = requests.post(url, xml, auth=self.auth)
         self.check_http_response(res)
-        return res.text
+        root = ET.fromstring(res.text)
+        etmodels = root.findall('.//ca:model', self.xml_namespace)
+        models = {
+            model.get('mh'): {
+                attr.get('id'): attr.text for attr in model.getchildren()
+            } for model in etmodels
+        }
+        return models
 
     def set_maintenance(self, model_handle, on=True):
         return self.update_attribute(model_handle, 0x1295d, str(not on))
