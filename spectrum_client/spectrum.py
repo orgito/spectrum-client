@@ -33,6 +33,8 @@ class Spectrum(object):
     <rs:requested-attribute id="0x10000"/> <!-- Model Type Name -->
     <rs:requested-attribute id="0x23000e"/> <!-- Device Type -->
     <rs:requested-attribute id="0x11d42"/> <!-- Landscape Name-->
+    <rs:requested-attribute id="0x1295d"/> <!-- isEnabled-->
+    <rs:requested-attribute id="0x11564"/> <!-- Notes-->
     '''
     models_search_template = '''<?xml version="1.0" encoding="UTF-8"?>
     <rs:model-request throttlesize="9999"
