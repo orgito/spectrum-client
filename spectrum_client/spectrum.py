@@ -33,7 +33,7 @@ class Spectrum(object):
     <rs:requested-attribute id="0x10000"/> <!-- Model Type Name -->
     <rs:requested-attribute id="0x23000e"/> <!-- Device Type -->
     <rs:requested-attribute id="0x11d42"/> <!-- Landscape Name-->
-    <rs:requested-attribute id="0x1295d"/> <!-- isEnabled-->
+    <rs:requested-attribute id="0x1295d"/> <!-- isManaged-->
     <rs:requested-attribute id="0x11564"/> <!-- Notes-->
     <rs:requested-attribute id="0x12db9"/> <!-- ServiceDesk Asset ID-->
     '''
@@ -120,7 +120,24 @@ class Spectrum(object):
         root = ET.fromstring(res.text)
         return root.find('.//ca:attribute', self.xml_namespace).text
 
-    def devices_by_name(self, regex, landscape=None):
+    def devices_by_filters(self, filters, landscape=None):
+        if isinstance(filters[0], (str, int)):
+            filters = [filters]
+        filters = [
+            dict(
+                operation=f[1],
+                attr_id=hex(f[0]) if isinstance(f[0], int) else f[0],
+                value=f[2]
+            ) for f in filters
+        ]
+        filters = ['''
+            <{operation}>
+                <attribute id="{attr_id}">
+                    <value>{value}</value>
+                </attribute>
+            </{operation}>'''.format(**f) for f in filters
+        ]
+        filters = '\n'.join(filters)
         if landscape:
             landscape_filter = self.xml_landscape_filter(landscape)
         else:
@@ -132,15 +149,17 @@ class Spectrum(object):
                 <model-type>0x1004b</model-type> <!-- Device -->
             </is-derived-from>
             {landscape_filter}
-            <has-pcre>
-                <attribute id="0x1006e">
-                    <value>{regex}</value>
-                </attribute>
-            </has-pcre>
-        </and>'''.format(regex=regex, landscape_filter=landscape_filter)
+            {filters}
+         </and>'''.format(landscape_filter=landscape_filter, filters=filters)
         xml = self.models_search_template.format(models_filter=models_filter)
         return self.search_models(xml)
 
+    def devices_by_attr(self, attr, value, landscape=None):
+        return self.devices_by_filters([(attr, 'equals', value)], landscape)
+
+    def devices_by_name(self, regex, landscape=None):
+        return self.devices_by_filters([('0x1006e', 'has-pcre', regex)], landscape)
+  
     def search_models(self, xml):
         url = '{}/spectrum/restful/models'.format(self.url)
         res = requests.post(url, xml, auth=self.auth)
@@ -158,14 +177,22 @@ class Spectrum(object):
         return self.update_attribute(model_handle, 0x1295d, str(not on))
 
     def update_attribute(self, model_handle, attr_id, value):
-        """Update an attribute of a Spectrum model.
-
-        Arguments:
-            model_handle {int} -- Model Handle of the model being updated.
-            attr_id {int} -- Attribute ID of the attribute being updated.
-            value {int or str} -- Value to set the attribute to.
-        """
-        url = '{}/spectrum/restful/model/{}'.format(self.url, hex(model_handle))
-        params = {'attr': hex(attr_id), 'val': value}
-        res = requests.put(url, params=params, auth=self.auth)
+        self.update_attributes(model_handle, (attr_id, value))
+    
+    def update_attributes(self, model_handle, updates):
+        if isinstance(model_handle, int):
+            model_handle = hex(model_handle)
+        if isinstance(updates[0], (str, int)):
+            updates = [updates]
+        updates = [
+            f(x) for x in updates for f in (
+                lambda x: ('attr', hex(x[0]) if isinstance(x[0], int) else x[0]),
+                lambda x: ('val', x[1])
+            )
+        ]
+        url = self.url + '/spectrum/restful/model/{}'.format(model_handle)
+        res = requests.put(url, params=updates, auth=self.auth)
         self._parse_update(res)
+
+        
+
