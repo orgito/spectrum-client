@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='spectrum-client',
-    version='0.0.8',
+    version='0.0.9',
     description='CA Spectrum Web Services API wrapper',
     long_description=README,
     long_description_content_type='text/markdown',
