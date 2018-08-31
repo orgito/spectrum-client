@@ -62,7 +62,7 @@ class Spectrum(object):
     def _parse_get(self, res):
         self.check_http_response(res)
 
-        root = ET.fromstring(res.text)
+        root = ET.fromstring(res.content)
         model_error = root.find('.//ca:model', self.xml_namespace).get('error')
         if model_error:
             raise SpectrumClientParameterError('Model Error: ' + model_error)
@@ -73,7 +73,7 @@ class Spectrum(object):
     def _parse_update(self, res):
         self.check_http_response(res)
 
-        root = ET.fromstring(res.text)
+        root = ET.fromstring(res.content)
         if root.find('.//ca:model', self.xml_namespace).get('error') == 'Success':
             return
 
@@ -117,7 +117,7 @@ class Spectrum(object):
         params = {'attr': hex(attr_id)}
         res = requests.get(url, params=params, auth=self.auth)
         self._parse_get(res)
-        root = ET.fromstring(res.text)
+        root = ET.fromstring(res.content)
         return root.find('.//ca:attribute', self.xml_namespace).text
 
     def devices_by_filters(self, filters, landscape=None):
@@ -159,12 +159,12 @@ class Spectrum(object):
 
     def devices_by_name(self, regex, landscape=None):
         return self.devices_by_filters([('0x1006e', 'has-pcre', regex)], landscape)
-  
+
     def search_models(self, xml):
         url = '{}/spectrum/restful/models'.format(self.url)
         res = requests.post(url, xml, auth=self.auth)
         self.check_http_response(res)
-        root = ET.fromstring(res.text)
+        root = ET.fromstring(res.content)
         etmodels = root.findall('.//ca:model', self.xml_namespace)
         models = {
             model.get('mh'): {
@@ -178,7 +178,7 @@ class Spectrum(object):
 
     def update_attribute(self, model_handle, attr_id, value):
         self.update_attributes(model_handle, (attr_id, value))
-    
+
     def update_attributes(self, model_handle, updates):
         if isinstance(model_handle, int):
             model_handle = hex(model_handle)
@@ -193,6 +193,3 @@ class Spectrum(object):
         url = self.url + '/spectrum/restful/model/{}'.format(model_handle)
         res = requests.put(url, params=updates, auth=self.auth)
         self._parse_update(res)
-
-        
-

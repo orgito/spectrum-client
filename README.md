@@ -9,7 +9,7 @@
 CA Spectrum Web Services API wrapper
 
 ## Instalation
-spectrum-client is distributed on PyPI and is available on Linux/macOS and Windows and supports Python 3.6+.
+spectrum-client is distributed on PyPI and is available on Linux/macOS and Windows and supports Python 2.7+, 3.4+.
 
 ``` bash
 $ pip install -U spectrum-client
@@ -26,16 +26,17 @@ oc = Spectrum('http://oneclick.mydomain:8080', 'myuser', 'secret')
 oc.update_attribute(0x210afa, 0x10024, 'MySNMPSecret')
 
 # Update multiple attributes
+notes = 'Some notes'
 updates = [(0x11564, notes), (0x12db9, 'JKL002'), (0x1295d, False)]
 oc.update_attributes(mh, updates)
 
-# Get a list of devices by name (only from landscape 0xa00000)
-oc.devices_by_name('^SW00', 0xa00000)
+# Get a list of devices by name, using regex, restricting the search to landscape 0x200000
+oc.devices_by_name('^SW00', 0x200000)
 
 # Get a lis tof devices by specific attribute from all landscapes
-return oc.devices_by_attr(0x12db9, 'XYZ001')
+oc.devices_by_attr(0x12db9, 'XYZ001')
 
-# Get a list of devices by multipe matchng filters
+# Get a list of devices by multipe matching filters
 oc.devices_by_filters([(attr1, 'equals', value1), (attr2, 'has-pcre', '^foo.*bar')], landscape)
 
 # Put a model in maintenance mode
