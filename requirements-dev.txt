@@ -4,3 +4,4 @@ pycodestyle=>2.4.0
 pylint=>2.1.1
 setuptools>=40.2.0
 twine>=4.25.0
+wheel>=0.31.1
