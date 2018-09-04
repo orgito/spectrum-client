@@ -1,3 +1,5 @@
+"""specrum_client"""
+
 import os
 import xml.etree.ElementTree as ET
 
@@ -10,18 +12,20 @@ SPECTRUM_PASSWORD = os.environ.get('SPECTRUM_PASSWORD')
 
 
 class SpectrumClientException(Exception):
-    pass
+    """Raised on OneClick errors"""
 
 
 class SpectrumClientAuthException(SpectrumClientException):
-    pass
+    """Raised on authentication errrors"""
 
 
 class SpectrumClientParameterError(SpectrumClientException):
-    pass
+    """Raised when invalid parameters are passed"""
 
 
 class Spectrum(object):
+    """A wrapper form OneClick REST API."""
+
     xml_namespace = {'ca': 'http://www.ca.com/spectrum/restful/schema/response'}
     default_attributes = '''
     <rs:requested-attribute id="0x1006e"/> <!-- Model Name -->
@@ -85,12 +89,14 @@ class Spectrum(object):
 
     @staticmethod
     def check_http_response(res):
+        """Validate the HTTP response"""
         if res.status_code == 401:
             raise SpectrumClientAuthException('Authorization Failure. Invalid user name or password.')
         res.raise_for_status()
 
     @staticmethod
     def xml_landscape_filter(landscape):
+        """Return a xml fragment filtering by landscape"""
         xml = '''
         <greater-than>
             <attribute id="0x129fa">
@@ -107,7 +113,7 @@ class Spectrum(object):
         return xml.format(landscape_start, landscape_end).strip()
 
     def get_attribute(self, model_handle, attr_id):
-        """Get an attribute of a Spectrum model.
+        """Get an attribute from Spectrum model.
 
         Arguments:
             model_handle {int} -- Model Handle of the model being queried.
@@ -121,6 +127,7 @@ class Spectrum(object):
         return root.find('.//ca:attribute', self.xml_namespace).text
 
     def devices_by_filters(self, filters, landscape=None):
+        """Returns a list of devices matching the filters"""
         if isinstance(filters[0], (str, int)):
             filters = [filters]
         filters = [
@@ -136,7 +143,7 @@ class Spectrum(object):
                     <value>{value}</value>
                 </attribute>
             </{operation}>'''.format(**f) for f in filters
-        ]
+                  ]
         filters = '\n'.join(filters)
         if landscape:
             landscape_filter = self.xml_landscape_filter(landscape)
@@ -155,12 +162,15 @@ class Spectrum(object):
         return self.search_models(xml)
 
     def devices_by_attr(self, attr, value, landscape=None):
+        """Returns a list of device matching an attribute value"""
         return self.devices_by_filters([(attr, 'equals', value)], landscape)
 
     def devices_by_name(self, regex, landscape=None):
+        """Returns a list of device for which the name matches a regex"""
         return self.devices_by_filters([('0x1006e', 'has-pcre', regex)], landscape)
 
     def search_models(self, xml):
+        """Returns the models matching the xml search"""
         url = '{}/spectrum/restful/models'.format(self.url)
         res = requests.post(url, xml, auth=self.auth)
         self.check_http_response(res)
@@ -174,12 +184,15 @@ class Spectrum(object):
         return models
 
     def set_maintenance(self, model_handle, on=True):
+        """Puts a device in maintenance mode"""
         return self.update_attribute(model_handle, 0x1295d, str(not on))
 
     def update_attribute(self, model_handle, attr_id, value):
+        """Update a single  attribute of a model"""
         self.update_attributes(model_handle, (attr_id, value))
 
     def update_attributes(self, model_handle, updates):
+        """Update a list of attributes of a model"""
         if isinstance(model_handle, int):
             model_handle = hex(model_handle)
         if isinstance(updates[0], (str, int)):
