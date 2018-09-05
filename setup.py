@@ -1,12 +1,13 @@
 # pylint: disable=C0111
+from os.path import join, dirname
 from setuptools import setup
 
-with open("README.md", "r") as fh:
-    README = fh.read()
+with open(join(dirname(__file__), 'README.md'), 'r') as fh:
+    README = fh.read().strip()
 
 setup(
     name='spectrum-client',
-    version='0.2.1',
+    version='0.2.2',
     description='CA Spectrum Web Services API wrapper',
     long_description=README,
     long_description_content_type='text/markdown',

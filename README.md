@@ -9,10 +9,10 @@
 CA Spectrum Web Services API wrapper
 
 ## Instalation
-spectrum-client is distributed on PyPI and is available on Linux/macOS and Windows and supports Python 2.7+, 3.4+.
+spectrum-client is distributed on PyPI and is available on Linux/macOS and Windows and supports Python 2.7, 3.4+.
 
 ``` bash
-$ pip install -U spectrum-client
+pip install -U spectrum-client
 ```
 
 ## Usage
