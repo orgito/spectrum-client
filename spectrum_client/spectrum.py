@@ -142,8 +142,7 @@ class Spectrum(object):
                 <attribute id="{attr_id}">
                     <value>{value}</value>
                 </attribute>
-            </{operation}>'''.format(**f) for f in filters
-                  ]
+            </{operation}>'''.format(**f) for f in filters]
         filters = '\n'.join(filters)
         if landscape:
             landscape_filter = self.xml_landscape_filter(landscape)

@@ -2,21 +2,24 @@
 from os.path import join, dirname
 from setuptools import setup
 
-with open(join(dirname(__file__), 'README.md'), 'r') as fh:
+here = dirname(__file__)
+about = {}
+with open(join(here, 'spectrum_client', '__version__.py'), 'r') as fh:
+    exec(fh.read(), about)
+
+with open(join(here, 'README.md'), 'r') as fh:
     README = fh.read().strip()
 
 setup(
-    name='spectrum-client',
-    version='0.2.2',
-    description='CA Spectrum Web Services API wrapper',
+    name=about['__title__'],
+    version=about['__version__'],
+    description=about['__description__'],
     long_description=README,
     long_description_content_type='text/markdown',
-    author='Renato Orgito',
-    author_email='orgito@gmail.com',
-    maintainer='Renato Orgito',
-    maintainer_email='orgito@gmail.com',
-    url='https://github.com/orgito/spectrum-client',
-    license='MIT',
+    author=about['__author__'],
+    author_email=about['__author_email__'],
+    url=about['__url__'],
+    license=about['__license__'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
