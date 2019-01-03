@@ -28,6 +28,7 @@ class Spectrum(object):
 
     xml_namespace = {'ca': 'http://www.ca.com/spectrum/restful/schema/response'}
     default_attributes = '''
+    <rs:requested-attribute id="0x129fa"/> <!-- Model Handle -->
     <rs:requested-attribute id="0x1006e"/> <!-- Model Name -->
     <rs:requested-attribute id="0x1000a"/> <!-- Condition -->
     <rs:requested-attribute id="0x11ee8"/> <!-- Model Class -->
@@ -35,6 +36,7 @@ class Spectrum(object):
     <rs:requested-attribute id="0x12d7f"/> <!-- IP Address -->
     <rs:requested-attribute id="0x1290c"/> <!-- Criticality -->
     <rs:requested-attribute id="0x10000"/> <!-- Model Type Name -->
+    <rs:requested-attribute id="0x10001"/> <!-- Model Type Handle -->
     <rs:requested-attribute id="0x23000e"/> <!-- Device Type -->
     <rs:requested-attribute id="0x11d42"/> <!-- Landscape Name-->
     <rs:requested-attribute id="0x1295d"/> <!-- isManaged-->
@@ -64,7 +66,7 @@ class Spectrum(object):
         self.auth = HTTPBasicAuth(username, password)
 
     def _parse_get(self, res):
-        self.check_http_response(res)
+        self._check_http_response(res)
 
         root = ET.fromstring(res.content)
         model_error = root.find('.//ca:model', self.xml_namespace).get('error')
@@ -75,7 +77,7 @@ class Spectrum(object):
             raise SpectrumClientParameterError(attr_error)
 
     def _parse_update(self, res):
-        self.check_http_response(res)
+        self._check_http_response(res)
 
         root = ET.fromstring(res.content)
         if root.find('.//ca:model', self.xml_namespace).get('error') == 'Success':
@@ -87,8 +89,37 @@ class Spectrum(object):
             msg = root.find('.//ca:model', self.xml_namespace).get('error-message')
         raise SpectrumClientParameterError(msg)
 
+    def _build_filter(self, filters, landscape=None):
+        if isinstance(filters[0], (str, int)):
+            filters = [filters]
+        filters = [
+            dict(
+                operation=f[1],
+                attr_id=hex(f[0]) if isinstance(f[0], int) else f[0],
+                value=f[2]
+            ) for f in filters
+        ]
+        filters = ['''
+            <{operation}>
+                <attribute id="{attr_id}">
+                    <value>{value}</value>
+                </attribute>
+            </{operation}>'''.format(**f) for f in filters]
+        filters = '\n'.join(filters)
+        if landscape:
+            landscape_filter = self.xml_landscape_filter(landscape)
+        else:
+            landscape_filter = ''
+
+        models_filter = '''
+        <and>
+            {landscape_filter}
+            {filters}
+         </and>'''.format(landscape_filter=landscape_filter, filters=filters)
+        return(self.models_search_template.format(models_filter=models_filter))
+
     @staticmethod
-    def check_http_response(res):
+    def _check_http_response(res):
         """Validate the HTTP response"""
         if res.status_code == 401:
             raise SpectrumClientAuthException('Authorization Failure. Invalid user name or password.')
@@ -128,51 +159,37 @@ class Spectrum(object):
 
     def devices_by_filters(self, filters, landscape=None):
         """Returns a list of devices matching the filters"""
-        if isinstance(filters[0], (str, int)):
-            filters = [filters]
-        filters = [
-            dict(
-                operation=f[1],
-                attr_id=hex(f[0]) if isinstance(f[0], int) else f[0],
-                value=f[2]
-            ) for f in filters
-        ]
-        filters = ['''
-            <{operation}>
-                <attribute id="{attr_id}">
-                    <value>{value}</value>
-                </attribute>
-            </{operation}>'''.format(**f) for f in filters]
-        filters = '\n'.join(filters)
-        if landscape:
-            landscape_filter = self.xml_landscape_filter(landscape)
-        else:
-            landscape_filter = ''
-
-        models_filter = '''
-        <and>
-            <is-derived-from>
-                <model-type>0x1004b</model-type> <!-- Device -->
-            </is-derived-from>
-            {landscape_filter}
-            {filters}
-         </and>'''.format(landscape_filter=landscape_filter, filters=filters)
-        xml = self.models_search_template.format(models_filter=models_filter)
+        device_only = (0x10001, 'is-derived-from', 0x1004b)
+        filters = [device_only, *filters]
+        xml = self._build_filter(filters, landscape)
         return self.search_models(xml)
 
     def devices_by_attr(self, attr, value, landscape=None):
-        """Returns a list of device matching an attribute value"""
+        """Returns a list of devices matching an attribute value"""
         return self.devices_by_filters([(attr, 'equals', value)], landscape)
 
     def devices_by_name(self, regex, landscape=None):
-        """Returns a list of device for which the name matches a regex"""
+        """Returns a list of devices for which the name matches a regex"""
         return self.devices_by_filters([('0x1006e', 'has-pcre', regex)], landscape)
+
+    def models_by_filters(self, filters, landscape=None):
+        """Returns a list of models matching the filters"""
+        xml = self._build_filter(filters, landscape)
+        return self.search_models(xml)
+
+    def models_by_attr(self, attr, value, landscape=None):
+        """Returns a list of models matching an attribute value"""
+        return self.models_by_filters([(attr, 'equals', value)], landscape)
+
+    def models_by_name(self, regex, landscape=None):
+        """Returns a list of models for which the name matches a regex"""
+        return self.models_by_filters([('0x1006e', 'has-pcre', regex)], landscape)
 
     def search_models(self, xml):
         """Returns the models matching the xml search"""
         url = '{}/spectrum/restful/models'.format(self.url)
         res = requests.post(url, xml, auth=self.auth)
-        self.check_http_response(res)
+        self._check_http_response(res)
         root = ET.fromstring(res.content)
         etmodels = root.findall('.//ca:model', self.xml_namespace)
         models = {
