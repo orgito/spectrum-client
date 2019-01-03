@@ -1,7 +1,7 @@
 __title__ = 'spectrum-client'
 __description__ = 'CA Spectrum Web Services API wrapper.'
 __url__ = 'https://github.com/orgito/spectrum-client'
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 __author__ = 'Renato Orgito'
 __author_email__ = 'orgito@gmail.com'
 __license__ = 'MIT'
