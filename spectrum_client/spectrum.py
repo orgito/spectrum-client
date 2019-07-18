@@ -25,6 +25,7 @@ class SpectrumClientParameterError(SpectrumClientException):
 
 class Spectrum(object):
     """A wrapper form OneClick REST API."""
+    headers = {'Content-Type': 'application/xml'}
 
     xml_namespace = {'ca': 'http://www.ca.com/spectrum/restful/schema/response'}
     default_attributes = '''
@@ -58,6 +59,34 @@ class Spectrum(object):
             </rs:models-search>
         </rs:target-models>
     ''' + default_attributes + '</rs:model-request>'
+
+    event_by_ip_template = '''<?xml version="1.0" encoding="UTF-8"?>
+    <rs:event-request throttlesize="10" xmlns:rs="http://www.ca.com/spectrum/restful/schema/request" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.ca.com/spectrum/restful/schema/request ../../../xsd/Request.xsd">
+        <rs:event>
+            <rs:target-models>
+                <rs:models-search>
+                    <rs:search-criteria xmlns="http://www.ca.com/spectrum/restful/schema/filter">
+                    <action-models>
+                        <filtered-models>
+                        <equals>
+                            <model-type>SearchManager</model-type>
+                        </equals>
+                        </filtered-models>
+                        <action>FIND_DEV_MODELS_BY_IP</action>
+                        <attribute id="AttributeID.NETWORK_ADDRESS">
+                            <value>{address}</value>
+                        </attribute>
+                    </action-models>
+                    </rs:search-criteria>
+                </rs:models-search>
+            </rs:target-models>
+            <!-- event ID -->
+            <rs:event-type id="{event}"/>
+            <!-- attributes/varbinds -->
+            {var_binds}
+        </rs:event>
+    </rs:event-request>
+'''
 
     def __init__(self, url=SPECTRUM_URL, username=SPECTRUM_USERNAME, password=SPECTRUM_PASSWORD):
         if url is None:
@@ -160,7 +189,7 @@ class Spectrum(object):
     def devices_by_filters(self, filters, landscape=None):
         """Returns a list of devices matching the filters"""
         device_only = (0x10001, 'is-derived-from', 0x1004b)
-        filters = [device_only, *filters]
+        filters = [device_only] + filters
         xml = self._build_filter(filters, landscape)
         return self.search_models(xml)
 
@@ -188,7 +217,7 @@ class Spectrum(object):
     def search_models(self, xml):
         """Returns the models matching the xml search"""
         url = '{}/spectrum/restful/models'.format(self.url)
-        res = requests.post(url, xml, auth=self.auth)
+        res = requests.post(url, xml, headers=self.headers, auth=self.auth)
         self._check_http_response(res)
         root = ET.fromstring(res.content)
         etmodels = root.findall('.//ca:model', self.xml_namespace)
@@ -222,3 +251,13 @@ class Spectrum(object):
         url = self.url + '/spectrum/restful/model/{}'.format(model_handle)
         res = requests.put(url, params=updates, auth=self.auth)
         self._parse_update(res)
+
+    # TODO: Parse the response
+    def generate_event_by_ip(self, event, address, variables):
+        var_binds = ""
+        for key, value in variables.items():
+            var_binds += '<rs:varbind id="{}">{}</rs:varbind>'.format(key, value)
+        xml = self.event_by_ip_template.format(event=event, address=address, var_binds=var_binds)
+        url = self.url + '/spectrum/restful/events'
+        res = requests.post(url, xml, headers=self.headers, auth=self.auth)
+        return res

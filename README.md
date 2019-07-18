@@ -44,6 +44,13 @@ oc.set_maintenance(model_handle, True)
 
 # Remove a model from maintenance mode
 oc.set_maintenance(model_handle, False)
+
+# Create an event of type 0x10f06 (generates a High Memory Utilization alarm) on a device with IP Address.
+event = '0x10f06'
+device_ip = '10.10.0.1'
+var_binds = {0: 75, 1: 99, 3: 'mem_instance', 5: 'name'}
+
+oc.generate_event_by_ip(event, device_ip, var_binds)
 ```
 
 If not provided, server and credentials will be read from the environment variables `SPECTRUM_URL`, `SPECTRUM_USERNAME`, `SPECTRUM_PASSWORD`.
