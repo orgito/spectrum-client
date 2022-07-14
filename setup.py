@@ -28,7 +28,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
@@ -44,7 +43,7 @@ setup(
     packages=['spectrum_client'],
     setup_requires=['setuptools>=40.2.0'],
     install_requires=['requests'],
-    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
+    python_requires='>=3.4',
     project_urls={
         'Bug Reports': 'https://github.com/orgito/spectrum-client/issues',
         'Source': 'https://github.com/orgito/spectrum-client',
